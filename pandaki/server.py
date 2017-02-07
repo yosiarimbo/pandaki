@@ -11,20 +11,13 @@ user = {}
 
 @app2.route('/api/serv1/v1.0/pandaki', methods=['GET'])
 def all_user():
-    data = []
+    data = ''
     all =  r_server.lrange('users', 0, -1)
     for i in all:
         data_user = r_server.hgetall(i)
-        print data_user
-        #print json.dumps(data_user)
-        for i in data_user:
-            data.append(data_user[i])
-            #print data
+        k = str(json.dumps(data_user))
+        data += k
     print data
-    print json.dumps(data)
-    #user = r_server.hgetall('yosia')
-    #print ', '.join(all)
-    #return json.dumps({'users:': all})
     return json.dumps(data)
 
 @app2.route('/api/serv1/v1.0/pandaki/darurat/<string:username>', methods=['GET'])
