@@ -1,6 +1,7 @@
 import redis, httplib, urllib, sys, os, json
 from twisted.internet import reactor, protocol
 from flask import Flask, request
+from time import time, sleep
 from redis import Redis
 from flask_redis import FlaskRedis
 app2 = Flask(__name__)
@@ -8,8 +9,35 @@ r_server = redis.Redis('localhost')
 
 user = {}
 
+@app2.route('/api/serv1/v1.0/pandaki', methods=['GET'])
 def all_user():
-    return r_server.lrange('users', 0, -1)
+    data = []
+    all =  r_server.lrange('users', 0, -1)
+    for i in all:
+        data_user = r_server.hgetall(i)
+        print data_user
+        #print json.dumps(data_user)
+        for i in data_user:
+            data.append(data_user[i])
+            #print data
+    print data
+    print json.dumps(data)
+    #user = r_server.hgetall('yosia')
+    #print ', '.join(all)
+    #return json.dumps({'users:': all})
+    return json.dumps(data)
+
+@app2.route('/api/serv1/v1.0/pandaki/darurat/<string:username>', methods=['GET'])
+def darurat(username):
+    lat = str(r_server.hget(username, 'lat'))
+    long = str(r_server.hget(username, 'long'))
+    while True:
+        print ('Pendaki dengan username: ' + username +' sedang mengalami posisi DARURAT posisi pendaki ada pada ' + lat + ' ' + long)
+        sleep(2)
+        if KeyboardInterrupt:
+            return 'Silahkan memeriksa chat'
+
+
 
 @app2.route('/api/serv1/v1.0/pandaki', methods=['POST'])
 def create_user():
@@ -29,18 +57,20 @@ def create_user():
         return 'tambah pendaki berhasil'
 
     #'''cekid = r_server.hvals('users')
-    '''a = int(cekid[-1]) + 1
-    id = str(a)
-    r_server.hmset('user:'+id, data)
-    r_server.hset('user:'+id, 'iduser', id)
-    username = r_server.hget('user:'+id, 'username')
-    r_server.hset('users', username, id)
-    print r_server.hgetall('users')
-    print r_server.hgetall('user:'+id)
-    password = r_server.hget('user:'+id, 'pass')
-    r_server.hset('pendaki', password, id)
-    print r_server.hgetall('pendaki')
-    return 'berhasil'''
+
+@app2.route('/api/serv1/v1.0/pandaki/<string:username>', methods=['GET'])
+def get_user(username):
+    user = r_server.hgetall(username)
+    print r_server.hgetall('yosia')
+    print user
+    return json.dumps(user)
+
+@app2.route('/api/serv1/v1.0/pandaki/lokasi/<string:username>', methods=['GET'])
+def get_lokasi(username):
+    lokasi = r_server.hmget(username, 'lat', 'long')
+    #print r_server.hgetall('yosia')
+    #print user
+    return json.dumps(lokasi)
 
 @app2.route('/api/serv1/v1.0/pandaki/<string:username>', methods=['DELETE'])
 def delete_user(username):
@@ -48,39 +78,54 @@ def delete_user(username):
     r_server.lrem('users', username)
     if username in r_server.lrange('admin', 0, -1):
         r_server.lrem('admin', username)
+        r_server.delete(username)
         return 'delete akun admin berhasil'
     if username in r_server.lrange('pendaki', 0, -1):
         r_server.lrem('pendaki', username)
+        groupid = r_server.hget(username, 'groupid')
+        groupid = str(groupid)
+        #r_server.lrem('groups', username)
+        r_server.lrem('group'+groupid, username)
+        r_server.hdel(username, 'groupid')
+        r_server.delete(username)
         return 'delete akun pendaki berhasil'
     else:
         return 'delete akun gagal'
     #id = str(userid)
-    '''username = r_server.hget('user:'+id, 'username')
-    password = r_server.hget('user:'+id, 'password')
-    r_server.hdel('users', username)
-    r_server.hdel('pendaki', password)
-    r_server.delete('user:'+id)'''
+
     #return 'delete berhasil'
 
 @app2.route('/api/serv1/v1.0/pandaki/group', methods=['POST'])
 def create_group():
     cekid = r_server.lrange('groups', -1, -1)
     if not cekid:
-        a = str(1)
+        id = str(1)
     else:
-        a = map(str, cekid)
-        a = ''.join(a)
-        a = int(a)+1
-        a = str(a)
-    r_server.rpush('groups', a)
+        id = map(str, cekid)
+        id = ''.join(id)
+        id = int(id)+1
+        id = str(id)
+    r_server.rpush('groups', id)
     all_user()
     anggota = request.form.get('anggota')
-    chunk = [x.strip() for x in anggota.split(',')]
-    for x in chunk:
-        print x
-        r_server.rpush('group:'+a, x)
+    chunk = [user.strip() for user in anggota.split(',')]
+    for user in chunk:
+        print user
+        r_server.hset(user, 'groupid', id)
+        r_server.rpush('group:'+id, user)
     return 'buat grup berhasil'
     #print r_server.hget(username, 'groupid')
+#cretae grup belum ada cek user nya kalo sudah ada grup nya gaggal
+#belum masukin data idgrup ke usernya
+
+@app2.route('/api/serv1/v1.0/pandaki/group/<string:groupid>', methods=['DELETE'])
+def delete_group(groupid):
+    user = r_server.lrange('group:'+groupid, 0, -1)
+    for x in user:
+        r_server.hdel(x, 'groupid')
+    r_server.lrem('groups', groupid)
+    r_server.delete('group:'+groupid)
+    return 'Delete group berhasil'
 
 @app2.route('/api/serv1/v1.0/pandaki/login', methods=['POST'])
 def login():
@@ -96,30 +141,11 @@ def login():
             if username in statuspendaki:
                 return 'pendaki'
             else :
-                'user tidak ditemukan'
+                return 'user tidak ditemukan'
         else:
             return 'password salah'
     else:
         return 'username salah'
-    return 'user tidak ditemukan'
-    '''print username, password
-    userid = r_server.hget('users', username)
-    a = str(userid)
-    if (userid == None):
-        #print userid
-        return 'salah id'
-    else :
-        realpass  = r_server.hget('user:'+a, 'pass')
-        if (password == realpass):
-            admin = r_server.hget('auths', password)
-            if (admin != None):
-                return 'admin'
-            else:
-                pendaki = r_server.hget('pendaki', password)
-                if (pendaki != None):
-                    return 'pendaki'
-                else:
-                    return 'password salah'''
 
     return 'user tidak ditemukan'
 
