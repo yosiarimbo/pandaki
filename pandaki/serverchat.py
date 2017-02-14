@@ -132,7 +132,8 @@ def websocket():
     factory = protocol.ServerFactory()
     factory.protocol = Chat
     #factory.clients = []
-    reactor.listenTCP(6666, WebSocketFactory(factory))
+    reactor.listenTCP(6666, factory)
+    reactor.listenTCP(9898, WebSocketFactory(factory))
     reactor.run()
 
 if __name__ ==  '__main__':
