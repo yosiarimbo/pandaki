@@ -20,6 +20,17 @@ def all_user():
     print data
     return json.dumps(data)
 
+@app2.route('/api/serv1/v1.0/pandaki/pendaki', methods=['GET'])
+def all_user_pendaki():
+    data = ''
+    all =  r_server.lrange('pendaki', 0, -1)
+    for i in all:
+        data_user = r_server.hgetall(i)
+        k = str(json.dumps(data_user))
+        data += k
+    print data
+    return json.dumps(data)
+
 @app2.route('/api/serv1/v1.0/pandaki/darurat/<string:username>', methods=['GET'])
 def darurat(username):
     lat = str(r_server.hget(username, 'lat'))
@@ -42,14 +53,27 @@ def create_user():
         return 'Coba Username lain'
     else:
         r_server.hmset(username, data)
-        r_server.rpush('users', username)
-        r_server.rpush('pendaki', username)
+        r_server.rpush('tempuser', username)
+        #r_server.rpush('users', username)
+        #r_server.rpush('pendaki', username)
         print r_server.hgetall(username)
         print r_server.lrange('users', 0, -1)
         print r_server.lrange('pendaki', 0, -1)
         return 'tambah pendaki berhasil'
 
     #'''cekid = r_server.hvals('users')
+
+@app2.route('/api/serv1/v1.0/pandaki/validasi', methods=['POST'])
+def validasi():
+    username = request.get_json('username')
+    print r_server.lrange('tempuser', 0, -1)
+    if username in r_server.lrange('tempuser', 0, -1):
+        r_server.rpush('users', username)
+        r_server.rpush('pendaki', username)
+        r_server.lrem('tempuser', username)
+        return 'Proses validasi berhasil'
+    else:
+        return 'User tidak terdaftar'
 
 @app2.route('/api/serv1/v1.0/pandaki/<string:username>', methods=['GET'])
 def get_user(username):
@@ -138,9 +162,8 @@ def login():
         else:
             return 'password salah'
     else:
-        return 'username salah'
+        return 'username tidak ditemukan'
 
-    return 'user tidak ditemukan'
 
 if __name__ == '__main__':
     app2.run(debug=True)

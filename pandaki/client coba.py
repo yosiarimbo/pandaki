@@ -57,19 +57,33 @@ def tambah_user(data):
 	#print params
 	print response.read()
 
+def validasi(username):
+	headers = {"Content-type": "application/json"}
+	params = json.dumps(username)
+	conn.request("POST", "/api/serv1/v1.0/pandaki/validasi", params, headers)
+	response = conn.getresponse()
+	print response.read()
+
 def semua():
 	conn.request("GET", "/api/serv1/v1.0/pandaki")
 	response = conn.getresponse()
 	all_user = json.loads(response.read())
 	print all_user
 	indeks = len(all_user)
-	x = PrettyTable(
+	'''x = PrettyTable(
 		["ID", "Nama", "Gender", "HP", "Long", "Email", "GroupID", "Password", "Lat", "Alamat", "Penyakit", 'Umur'])
 	x.align["ID"] = "l"  # Left align city names
 	x.padding_width = 1  # One space between column edges and contents (default)
 	for row in range(0, indeks, 12):
 		x.add_row(all_user[row:row+12])
-	print x
+	print x'''
+
+def read_pendaki():
+	conn.request("GET", "/api/serv1/v1.0/pandaki/pendaki")
+	response = conn.getresponse()
+	all_user = json.loads(response.read())
+	print response
+	print all_user
 
 
 def get_user(username):
@@ -139,11 +153,13 @@ if (menu==1):
 		if (status == 'admin'):
 			print "menu admin\n"
 			print "1. Create User"
-			print "2. Read Data User"
+			print "2. Read Data All User"
 			print "3. Create Group"
 			print "4. Delete Data User"
 			print "5. Delete Group"
 			print "6. Chat"
+			print '7. Validasi user'
+			print '8. Read Data pendaki'
 			menuadmin = input("Silahkan pilih : ")
 			if (menuadmin==1):
 				os.system('clear')  # for linux
@@ -177,6 +193,12 @@ if (menu==1):
 				delete_user(groupid)
 			if (menuadmin==6):
 				chat(username)
+			if (menuadmin == 7):
+				username = raw_input('username : ')
+				validasi(username)
+			if (menuadmin == 8):
+				read_pendaki()
+
 		if (status == 'pendaki'):
 			print "menu pendaki\n"
 			print "1. Lokasiku"
