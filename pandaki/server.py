@@ -11,14 +11,16 @@ user = {}
 
 @app2.route('/api/serv1/v1.0/pandaki', methods=['GET'])
 def all_user():
+    user = []
     data = ''
     all =  r_server.lrange('users', 0, -1)
     for i in all:
         data_user = r_server.hgetall(i)
-        k = str(json.dumps(data_user))
-        data += k
+        #k = str(json.dumps(data_user))
+        #data += k
+        user.append(data_user)
     print data
-    return json.dumps(data)
+    return json.dumps(user)
 
 @app2.route('/api/serv1/v1.0/pandaki/pendaki', methods=['GET'])
 def all_user_pendaki():
