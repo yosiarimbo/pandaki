@@ -4,6 +4,7 @@ from flask import Flask, request
 from time import time, sleep
 from redis import Redis
 from flask_redis import FlaskRedis
+from datetime import datetime
 app2 = Flask(__name__)
 r_server = redis.Redis('localhost')
 
@@ -65,6 +66,99 @@ def create_user():
 
     #'''cekid = r_server.hvals('users')
 
+@app2.route('/api/serv1/v1.0/pandaki/infotips', methods=['POST'])
+def create_info():
+    data = request.get_json('data')
+    tipe = data['tipe']
+    if tipe == 'info':
+        if len(r_server.lrange('idinfo', 0, -1)) == 0:
+            id = '1'
+            time = str(datetime.now())
+            r_server.rpush('idinfo', id)
+            r_server.hmset('info:'+id, data)
+            r_server.hset('info:'+id, 'time', time)
+            print r_server.lrange('idinfo', 0, -1)
+            print r_server.hgetall('info:'+id)
+            return 'Create Info Berhasil'
+        else:
+            id = r_server.lrange('idinfo', -1, -1)
+            id = " ".join(str(x) for x in id)
+            id = int(id) + 1
+            id = str(id)
+            time = str(datetime.now())
+            r_server.rpush('idinfo', id)
+            r_server.hmset('info:'+id, data)
+            r_server.hset('info:'+id, 'time', time)
+            print r_server.lrange('idinfo', 0, -1)
+            print r_server.hgetall('info:'+id)
+            return 'Create Info Berhasil'
+    elif tipe == 'tips':
+        if len(r_server.lrange('idtips', 0, -1)) == 0:
+            id = '1'
+            time = str(datetime.now())
+            r_server.rpush('idtips', id)
+            r_server.hmset('tips:'+id, data)
+            r_server.hset('tips:'+id, 'time', time)
+            print r_server.lrange('idtips', 0, -1)
+            print r_server.hgetall('tips:'+id)
+            return 'Create Tips Berhasil'
+        else:
+            id = r_server.lrange('idtips', -1, -1)
+            id = " ".join(str(x) for x in id)
+            id = int(id) + 1
+            id = str(id)
+            time = str(datetime.now())
+            r_server.rpush('idtips', id)
+            r_server.hmset('tips:'+id, data)
+            r_server.hset('tips:'+id, 'time', time)
+            print r_server.lrange('idtips', 0, -1)
+            print r_server.hgetall('tips:'+id)
+            return 'Create Tips Berhasil'
+    else:
+        return 'Create Tips atau Info Gagal'
+
+@app2.route('/api/serv1/v1.0/pandaki/infotips/info', methods=['GET'])
+def all_info():
+    info = []
+    data = ''
+    all =  r_server.lrange('idinfo', 0, -1)
+    for i in all:
+        data_info = r_server.hgetall('info:'+i)
+        #k = str(json.dumps(data_user))
+        #data += k
+        info.append(data_info)
+    print data
+    return json.dumps(info)
+
+@app2.route('/api/serv1/v1.0/pandaki/infotips/tips', methods=['GET'])
+def all_tips():
+    tips = []
+    data = ''
+    all = r_server.lrange('idtips', 0, -1)
+    for i in all:
+        data_info = r_server.hgetall('tips:' + i)
+        # k = str(json.dumps(data_user))
+        # data += k
+        tips.append(data_info)
+    print data
+    return json.dumps(tips)
+
+@app2.route('/api/serv1/v1.0/pandaki/infotips/info<string:id>', methods=['DELETE'])
+def delete_info(id):
+    r_server.delete('info:'+id)
+    r_server.lrem('idinfo', id)
+    print r_server.lrange('idinfo', 0, -1)
+    print r_server.hgetall('info:' + id)
+    return 'Delete info berhasil'
+
+@app2.route('/api/serv1/v1.0/pandaki/infotips/tips<string:id>', methods=['DELETE'])
+def delete_tips(id):
+    r_server.delete('tips:'+id)
+    r_server.lrem('idtips', id)
+    print r_server.lrange('idtips', 0, -1)
+    print r_server.hgetall('tips:' + id)
+    return 'Delete tips berhasil'
+
 @app2.route('/api/serv1/v1.0/pandaki/validasi', methods=['POST'])
 def validasi():
     username = request.get_json('username')
@@ -84,12 +178,42 @@ def get_user(username):
     print user
     return json.dumps(user)
 
+@app2.route('/api/serv1/v1.0/pandaki/infotips/info<string:id>', methods=['GET'])
+def get_info(id):
+    info = r_server.hgetall('info:'+id)
+    return json.dumps(info)
+
+@app2.route('/api/serv1/v1.0/pandaki/infotips/tips<string:id>', methods=['GET'])
+def get_tips(id):
+    tips = r_server.hgetall('tips:'+id)
+    return json.dumps(tips)
+
 @app2.route('/api/serv1/v1.0/pandaki/lokasi/<string:username>', methods=['GET'])
 def get_lokasi(username):
     lokasi = r_server.hmget(username, 'lat', 'long')
     #print r_server.hgetall('yosia')
     #print user
     return json.dumps(lokasi)
+
+@app2.route('/api/serv1/v1.0/pandaki/infotips/info', methods=['PUT'])
+def update_info():
+    id = request.form.get('id')
+    judul = request.form.get('judul')
+    konten = request.form.get('konten')
+    foto = request.form.get('foto')
+    time = str(datetime.now())
+    r_server.hmset('info:'+id, {'judul': judul, 'konten': konten, 'foto': foto, 'time': time})
+    return 'update info berhasil'
+
+@app2.route('/api/serv1/v1.0/pandaki/infotips/tips', methods=['PUT'])
+def update_tips():
+    id = request.form.get('id')
+    judul = request.form.get('judul')
+    konten = request.form.get('konten')
+    foto = request.form.get('foto')
+    time = str(datetime.now())
+    r_server.hmset('tips:'+id, {'judul': judul, 'konten': konten, 'foto': foto, 'time': time})
+    return 'update info berhasil'
 
 @app2.route('/api/serv1/v1.0/pandaki/<string:username>', methods=['DELETE'])
 def delete_user(username):
@@ -124,14 +248,25 @@ def create_group():
         id = ''.join(id)
         id = int(id)+1
         id = str(id)
-    r_server.rpush('groups', id)
-    all_user()
+
+    #all_user()
     anggota = request.form.get('anggota')
+    isi = str(anggota)
+    #print isi
     chunk = [user.strip() for user in anggota.split(',')]
-    for user in chunk:
-        print user
-        r_server.hset(user, 'groupid', id)
-        r_server.rpush('group:'+id, user)
+    #print chunk[0]
+    #print chunk[1]
+    print len(chunk)
+    print user
+    for users in chunk:
+        print users
+        if (r_server.hget(users, 'groupid') == ''):
+            r_server.rpush('groups', id)
+            r_server.hset(users, 'groupid', id)
+            r_server.rpush('group:' + id, users)
+            #return 'buat grup berhasil'
+        if (r_server.hget(users, 'groupid') == None):
+            return 'User ' +users+ ' tidak ada'
     return 'buat grup berhasil'
     #print r_server.hget(username, 'groupid')
 #cretae grup belum ada cek user nya kalo sudah ada grup nya gaggal
@@ -139,12 +274,15 @@ def create_group():
 
 @app2.route('/api/serv1/v1.0/pandaki/group/<string:groupid>', methods=['DELETE'])
 def delete_group(groupid):
-    user = r_server.lrange('group:'+groupid, 0, -1)
-    for x in user:
-        r_server.hdel(x, 'groupid')
-    r_server.lrem('groups', groupid)
-    r_server.delete('group:'+groupid)
-    return 'Delete group berhasil'
+    if groupid in r_server.lrange('groups', 0, -1):
+        user = r_server.lrange('group:'+groupid, 0, -1)
+        for x in user:
+            r_server.hset(x, 'groupid', '')
+        r_server.lrem('groups', groupid)
+        r_server.delete('group:'+groupid)
+        return 'Delete group berhasil'
+    else:
+        return 'Delete group gagal'
 
 @app2.route('/api/serv1/v1.0/pandaki/login', methods=['POST'])
 def login():

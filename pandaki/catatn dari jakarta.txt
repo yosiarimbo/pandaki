@@ -1,0 +1,14 @@
+Chat :
+    1.identify user : username 'username'
+      contoh : username yosia
+    2.darurat : 'username' darurat sebanyak 3 kali
+      contoh : yosia darurat
+    3.stop darurat : 'admin_username' stop 'pendaki_username'
+      contoh : yosia stop keceng
+    4.personal chat : 'sender_username' sendto 'receiver_username' pesan
+      contoh : yosia sendto keceng halo
+    5.broadcast : 'sender_username' broadcast pesan
+      contoh : yosia broadcast halo
+    6.chatgroup : 'sender_username' chatgroup pesan
+      contoh : yosia chatgroup halo
+
