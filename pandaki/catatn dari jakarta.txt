@@ -12,3 +12,14 @@ Chat :
     6.chatgroup : 'sender_username' chatgroup pesan
       contoh : yosia chatgroup halo
 
+Proses mengetahui pendaki sudah turun gimana?
+    1. Ninggal KTP harus ambil
+    Risk : repot
+    2. Dikasi waktu, lebih dari seminggu misal otomatis dianggap sudah turun
+    Risk : Kalo beneran hilang datanya hilang
+    3. Konfirmasi di pos
+    Risk : Ada pendaki yang males konfirmasi
+    4. Sampai di pos akhir penurunan sistem otomatis report
+    Risk : Ada pendaki tiba2 balik lagi ke atas (ada yg ketinggalan), pos akhir penurunan ternyata sama dengan pos pada saat registrasi
+
+
