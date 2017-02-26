@@ -256,21 +256,36 @@ def create_group():
     chunk = [user.strip() for user in anggota.split(',')]
     #print chunk[0]
     #print chunk[1]
-    print len(chunk)
-    print user
+    #print len(chunk)
+    #print user
     for users in chunk:
         print users
         if (r_server.hget(users, 'groupid') == ''):
-            r_server.rpush('groups', id)
-            r_server.hset(users, 'groupid', id)
-            r_server.rpush('group:' + id, users)
-            #return 'buat grup berhasil'
+            if (id in r_server.lrange('groups', 0, -1)):
+                r_server.hset(users, 'groupid', id)
+                r_server.rpush('group:' + id, users)
+                #return 'buat grup berhasil'
+            else :
+                r_server.rpush('groups', id)
+                r_server.rpush('group:' + id, users)
+                r_server.hset(users, 'groupid', id)
         if (r_server.hget(users, 'groupid') == None):
             return 'User ' +users+ ' tidak ada'
     return 'buat grup berhasil'
     #print r_server.hget(username, 'groupid')
 #cretae grup belum ada cek user nya kalo sudah ada grup nya gaggal
 #belum masukin data idgrup ke usernya
+
+@app2.route('/api/serv1/v1.0/pandaki/group', methods=['GET'])
+def all_group():
+    grup = []
+    cekid = r_server.lrange('groups', 0, -1)
+    for id in cekid:
+        #id = int(id) + 1
+        id = str(id)
+        anggota_group = r_server.lrange('group:'+id, 0, -1)
+        grup.append(anggota_group)
+    return json.dumps(grup)
 
 @app2.route('/api/serv1/v1.0/pandaki/group/<string:groupid>', methods=['DELETE'])
 def delete_group(groupid):
